@@ -121,17 +121,15 @@
             border: 2px solid white;
         }
 
-        /* --- Hoop Design (Layering Fixed) --- */
+        /* --- Hoop Design --- */
         .hoop-container {
             position: absolute;
             top: 18%; 
             width: 100%;
             display: flex;
             justify-content: space-around;
-            padding: 0 10%;
-            box-sizing: border-box;
             pointer-events: none;
-            z-index: 5;
+            z-index: 5; 
         }
 
         .hoop-structure {
@@ -148,7 +146,7 @@
             width: 12px;
             height: 300px;
             background: #222;
-            z-index: 1;
+            z-index: 1; 
         }
 
         .hoop-board {
@@ -158,7 +156,7 @@
             border: 5px solid #795548;
             border-radius: 5px;
             position: relative;
-            z-index: 2;
+            z-index: 2; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             display: flex;
             justify-content: center;
@@ -175,6 +173,7 @@
             border-bottom: none;
         }
 
+        /* ห่วงเหล็ก (Rim) */
         .hoop-rim {
             width: 60px;
             height: 6px;
@@ -182,9 +181,10 @@
             border-radius: 3px;
             position: absolute;
             bottom: 10px;
-            z-index: 20;
+            z-index: 20; 
         }
 
+        /* ตาข่าย - เป้าหมายการลง */
         .hoop-net {
             position: absolute;
             top: 75px;
@@ -195,7 +195,7 @@
             border-left: 2px solid rgba(255,255,255,0.6);
             border-right: 2px solid rgba(255,255,255,0.6);
             clip-path: polygon(0 0, 100% 0, 85% 100%, 15% 100%);
-            z-index: 3;
+            z-index: 3; 
             transition: transform 0.1s;
             transform-origin: top center;
         }
@@ -316,7 +316,7 @@
                 <div class="hoop-post"></div>
                 <div class="hoop-board"></div>
                 <div class="hoop-net" id="net-left"></div>
-                <div class="hoop-rim"></div>
+                <div class="hoop-rim"></div> 
             </div>
             <div class="hoop-structure" id="hoop-lahu">
                 <div class="hoop-label">คำลหุ</div>
@@ -455,8 +455,7 @@
             ballElem.style.transition = 'none';
             ballElem.style.transform = 'translate(-50%, 0) scale(1) rotate(0deg)';
             ballElem.style.bottom = '50px';
-            ballElem.style.left = '50%';
-            ballElem.style.zIndex = '30';
+            ballElem.style.zIndex = '30'; 
             
             isDragging = false;
             isAnimating = false;
@@ -514,86 +513,98 @@
             ballElem.style.transform = 'translate(-50%, 0) scale(1)';
         }
 
-        // --- ฟังก์ชันคำนวณตำแหน่งห่วงจริง ---
-        function getHoopPosition(direction) {
-            const hoopId = direction === "left" ? "hoop-garhu" : "hoop-lahu";
-            const hoopElem = document.getElementById(hoopId);
-            const rim = hoopElem.querySelector('.hoop-rim');
-            
-            // หาตำแหน่งจริงของห่วงบนหน้าจอ
-            const rimRect = rim.getBoundingClientRect();
-            const ballRect = ballElem.getBoundingClientRect();
-            
-            // คำนวณจุดกึ่งกลางของห่วง
-            const rimCenterX = rimRect.left + rimRect.width / 2;
-            const rimCenterY = rimRect.top + rimRect.height / 2;
-            
-            // คำนวณจุดเริ่มต้นของลูกบาส
-            const ballCenterX = ballRect.left + ballRect.width / 2;
-            const ballCenterY = ballRect.top + ballRect.height / 2;
-            
-            return {
-                targetX: rimCenterX - ballCenterX,
-                targetY: ballCenterY - rimCenterY,
-                rimY: rimCenterY
-            };
-        }
+        // --- Cinematic Animation with DYNAMIC TARGETING (แก้ไขใหม่) ---
 
-        // --- Cinematic Animation (Fixed to target actual hoop position) ---
         function triggerShoot(direction) {
             isAnimating = true;
             
-            // ใช้ตำแหน่งจริงของห่วงแทนการคำนวณแบบ hardcode
-            const hoopPos = getHoopPosition(direction);
-            const targetXOffset = hoopPos.targetX;
-            const targetYRise = hoopPos.targetY;
+            // 1. หาตำแหน่งลูกบาสปัจจุบัน
+            const ballRect = ballElem.getBoundingClientRect();
+            const ballCenterX = ballRect.left + (ballRect.width / 2);
+            const ballBottomY = ballRect.bottom;
+
+            // 2. หาตำแหน่ง "ตาข่าย" เป้าหมาย (Net) จริงๆ บนหน้าจอ
+            const targetId = (direction === "left") ? "net-left" : "net-right";
+            const targetElem = document.getElementById(targetId);
+            const targetRect = targetElem.getBoundingClientRect();
             
-            const duration = 800; 
+            // หาจุดกึ่งกลางของตาข่าย
+            const targetCenterX = targetRect.left + (targetRect.width / 2);
+            const targetCenterY = targetRect.top + (targetRect.height / 2);
+
+            // 3. คำนวณระยะทาง (Delta) ที่ต้องเคลื่อนที่
+            // X: ระยะห่างแนวนอน (Pixel Difference)
+            const deltaX = targetCenterX - ballCenterX;
+            
+            // Y: ระยะห่างแนวตั้ง (Pixel Difference) ต้องเป็นค่าบวกสำหรับการคำนวณความสูง
+            // (ลูกบอลอยู่ต่ำกว่าห่วง = ballRect.top > targetRect.top)
+            // เราต้องการระยะจากจุดเริ่ม ขึ้นไปยังห่วง
+            // ลูกบาสเริ่มที่ bottom: 50px แต่ transform จัดการ
+            // ใช้ความต่างของ Rect Top ง่ายสุด
+            const deltaY = ballRect.top - targetRect.top; 
+
+            const duration = 900; 
             const startTime = performance.now();
-            
-            // จุดสูงสุดของวิถีโค้ง (สูงกว่าห่วงประมาณ 100px)
-            const peakHeight = targetYRise + 120;
             
             function animate(time) {
                 let elapsed = time - startTime;
                 let progress = elapsed / duration;
                 if (progress > 1) progress = 1;
 
-                // X movement: Ease-out curve
-                const easeOutProgress = 1 - Math.pow(1 - progress, 2);
-                const currentX = targetXOffset * easeOutProgress;
+                // X Movement: เลื่อนตามระยะทางจริงที่คำนวณได้
+                const currentX = deltaX * progress;
                 
-                // Y movement: Parabolic arc
-                // ใช้สูตรพาราโบลา: y = -4h(x - 0.5)² + h โดย h คือความสูงสูงสุด
-                // เมื่อ x = 0: y = 0, x = 0.5: y = h (จุดสูงสุด), x = 1: y = 0
+                // Y Movement: Parabola
+                // ให้จุดสูงสุด (Peak) อยู่สูงกว่าห่วงนิดหน่อย (+100px) แล้วตกลงมา
+                const peakHeight = deltaY + 100; 
                 
-                let currentY;
-                if (progress <= 0.5) {
-                    // ช่วงขาขึ้น: เร่งขึ้นไปจุดสูงสุด
-                    const upProgress = progress / 0.5;
-                    currentY = peakHeight * (1 - Math.pow(1 - upProgress, 2));
+                let yFactor;
+                if (progress < 0.6) {
+                    // ขาขึ้น (Ease Out)
+                    yFactor = 1 - Math.pow(1 - (progress / 0.6), 2);
                 } else {
-                    // ช่วงขาลง: ตกลงมาที่ห่วง
-                    const downProgress = (progress - 0.5) / 0.5;
-                    const heightAtPeak = peakHeight;
-                    const heightAtEnd = targetYRise;
-                    currentY = heightAtPeak - (heightAtPeak - heightAtEnd) * Math.pow(downProgress, 2);
+                    // ขาลง (Gravity) ลงมาที่ DeltaY (ระดับห่วง)
+                    const dropProgress = (progress - 0.6) / 0.4;
+                    // คำนวณให้ลงมาจบที่ deltaY พอดี ไม่ใช่ 0
+                    // Peak -> Target
+                    const range = peakHeight - deltaY; 
+                    // เราต้องการค่า Y ที่จะเอาไปลบ (Translate Y ยิ่งลบยิ่งขึ้น)
+                    // ที่ progress 1.0 ค่าต้องเท่ากับ deltaY (ระดับห่วง)
+                    
+                    // สูตร Interpolate จาก Peak ลงมา Target
+                    const drop = (peakHeight - deltaY) * (dropProgress * dropProgress); 
+                    // currentY ในช่วงนี้คือ Peak - drop
+                    // แต่ตัวแปรที่เราใช้คือ "ความสูงจากพื้น" ใน Logic เก่า
+                    // เปลี่ยนเป็น "ระยะทาง Pixel ที่เลื่อนขึ้นไป"
                 }
 
-                // --- DEPTH SWAPPING ---
-                // เมื่อบอลผ่านจุดสูงสุดและกำลังตกลง สลับไปอยู่หลังห่วง
-                if (progress > 0.55) {
-                    ballElem.style.zIndex = '10';
+                // คำนวณ Y ใหม่แบบ Simple Parabola Interpolation
+                // P0 = 0 (Start)
+                // P1 = deltaY + 150 (Control Point สูงเหนือห่วง)
+                // P2 = deltaY (End at Hoop)
+                
+                // Quadratic Bezier: (1-t)^2 * P0 + 2(1-t)t * P1 + t^2 * P2
+                const t = progress;
+                const p0 = 0;
+                const p1 = deltaY + 250; // สูงขึ้นไปอีกเพื่อให้โค้งสวย
+                const p2 = deltaY - 20; // ลงต่ำกว่าห่วงนิดนึงให้ดูเหมือนลงตาข่าย (Visual Correction)
+                
+                const currentY = (1-t)*(1-t)*p0 + 2*(1-t)*t*p1 + t*t*p2;
+
+                // Z-Index Swapping (เทคนิคเดิม)
+                if (progress > 0.6) {
+                    ballElem.style.zIndex = '10'; // เข้าหลังห่วง
                 } else {
                     ballElem.style.zIndex = '30';
                 }
 
-                // Scale: เล็กลงเมื่อไกลออกไป (สร้างมิติลึก)
-                const scale = 1 - (0.5 * progress);
+                // Scale
+                const scale = 1 - (0.55 * progress);
 
                 // Rotation
-                const rotate = (direction === "left" ? -1 : 1) * 540 * progress;
+                const rotate = (direction === "left" ? -1 : 1) * 720 * progress;
 
+                // Apply
                 ballElem.style.transform = `translate(calc(-50% + ${currentX}px), -${currentY}px) scale(${scale}) rotate(${rotate}deg)`;
 
                 if (progress < 1) {
@@ -624,7 +635,6 @@
         function animateNet(side) {
             const netId = side === "garhu" ? "net-left" : "net-right";
             const net = document.getElementById(netId);
-            // Swish effect
             net.style.transition = "transform 0.1s ease-in-out";
             net.style.transform = "scaleY(1.4) skewX(5deg)";
             setTimeout(() => { 
