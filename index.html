@@ -128,8 +128,10 @@
             width: 100%;
             display: flex;
             justify-content: space-around;
+            padding: 0 10%;
+            box-sizing: border-box;
             pointer-events: none;
-            z-index: 5; /* Container Layer */
+            z-index: 5;
         }
 
         .hoop-structure {
@@ -146,7 +148,7 @@
             width: 12px;
             height: 300px;
             background: #222;
-            z-index: 1; /* Layer ต่ำสุด */
+            z-index: 1;
         }
 
         .hoop-board {
@@ -156,7 +158,7 @@
             border: 5px solid #795548;
             border-radius: 5px;
             position: relative;
-            z-index: 2; /* แป้นอยู่หลังห่วง */
+            z-index: 2;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             display: flex;
             justify-content: center;
@@ -173,7 +175,6 @@
             border-bottom: none;
         }
 
-        /* ห่วงเหล็ก (Rim) - ต้องอยู่หน้าสุดเสมอเพื่อให้บอลลอด "หลัง" มันได้ในจังหวะตก */
         .hoop-rim {
             width: 60px;
             height: 6px;
@@ -181,7 +182,7 @@
             border-radius: 3px;
             position: absolute;
             bottom: 10px;
-            z-index: 20; /* Layer สูงสุด (หน้าบอลตอนตก) */
+            z-index: 20;
         }
 
         .hoop-net {
@@ -194,7 +195,7 @@
             border-left: 2px solid rgba(255,255,255,0.6);
             border-right: 2px solid rgba(255,255,255,0.6);
             clip-path: polygon(0 0, 100% 0, 85% 100%, 15% 100%);
-            z-index: 3; /* อยู่หลัง Rim แต่อยู่หน้าแป้น */
+            z-index: 3;
             transition: transform 0.1s;
             transform-origin: top center;
         }
@@ -229,7 +230,6 @@
             justify-content: center;
             align-items: center;
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            /* เริ่มต้นอยู่หน้าสุดเพื่อให้ลากได้ง่าย */
             z-index: 30; 
         }
 
@@ -316,7 +316,8 @@
                 <div class="hoop-post"></div>
                 <div class="hoop-board"></div>
                 <div class="hoop-net" id="net-left"></div>
-                <div class="hoop-rim"></div> </div>
+                <div class="hoop-rim"></div>
+            </div>
             <div class="hoop-structure" id="hoop-lahu">
                 <div class="hoop-label">คำลหุ</div>
                 <div class="hoop-post"></div>
@@ -454,7 +455,8 @@
             ballElem.style.transition = 'none';
             ballElem.style.transform = 'translate(-50%, 0) scale(1) rotate(0deg)';
             ballElem.style.bottom = '50px';
-            ballElem.style.zIndex = '30'; // เริ่มต้นอยู่หน้าสุด
+            ballElem.style.left = '50%';
+            ballElem.style.zIndex = '30';
             
             isDragging = false;
             isAnimating = false;
@@ -512,82 +514,85 @@
             ballElem.style.transform = 'translate(-50%, 0) scale(1)';
         }
 
-        // --- Cinematic Animation (Fixed Depth) ---
+        // --- ฟังก์ชันคำนวณตำแหน่งห่วงจริง ---
+        function getHoopPosition(direction) {
+            const hoopId = direction === "left" ? "hoop-garhu" : "hoop-lahu";
+            const hoopElem = document.getElementById(hoopId);
+            const rim = hoopElem.querySelector('.hoop-rim');
+            
+            // หาตำแหน่งจริงของห่วงบนหน้าจอ
+            const rimRect = rim.getBoundingClientRect();
+            const ballRect = ballElem.getBoundingClientRect();
+            
+            // คำนวณจุดกึ่งกลางของห่วง
+            const rimCenterX = rimRect.left + rimRect.width / 2;
+            const rimCenterY = rimRect.top + rimRect.height / 2;
+            
+            // คำนวณจุดเริ่มต้นของลูกบาส
+            const ballCenterX = ballRect.left + ballRect.width / 2;
+            const ballCenterY = ballRect.top + ballRect.height / 2;
+            
+            return {
+                targetX: rimCenterX - ballCenterX,
+                targetY: ballCenterY - rimCenterY,
+                rimY: rimCenterY
+            };
+        }
 
+        // --- Cinematic Animation (Fixed to target actual hoop position) ---
         function triggerShoot(direction) {
             isAnimating = true;
             
-            // ปรับตำแหน่งเป้าหมายให้แม่นยำกับรูปห่วงใน CSS
-            const screenW = window.innerWidth;
-            const hoopOffset = (screenW < 500) ? 140 : 180; // ระยะห่างจากตรงกลาง
-            const targetXOffset = (direction === "left" ? -hoopOffset : hoopOffset);
+            // ใช้ตำแหน่งจริงของห่วงแทนการคำนวณแบบ hardcode
+            const hoopPos = getHoopPosition(direction);
+            const targetXOffset = hoopPos.targetX;
+            const targetYRise = hoopPos.targetY;
             
-            // ตำแหน่ง Y ที่ห่วงอยู่ (ประมาณ 20% จากด้านบน หรือสูงขึ้นมาจากพื้น 80%)
-            // เราจะให้ลูกบอลลอยสูงกว่าห่วงนิดหน่อย แล้วตกลงมา
-            const targetYBase = window.innerHeight * 0.72; 
-            
-            const duration = 900; 
+            const duration = 800; 
             const startTime = performance.now();
+            
+            // จุดสูงสุดของวิถีโค้ง (สูงกว่าห่วงประมาณ 100px)
+            const peakHeight = targetYRise + 120;
             
             function animate(time) {
                 let elapsed = time - startTime;
                 let progress = elapsed / duration;
                 if (progress > 1) progress = 1;
 
-                // X movement: Linear
-                const currentX = targetXOffset * progress;
+                // X movement: Ease-out curve
+                const easeOutProgress = 1 - Math.pow(1 - progress, 2);
+                const currentX = targetXOffset * easeOutProgress;
                 
-                // Y movement: Parabola Physics
-                // ขึ้นไปสูงกว่าห่วงนิดนึง (1.1) แล้วตกลงมาที่ห่วง (1.0)
-                // ใช้สูตรพาราโบลาคว่ำ: -4 * (x - 0.5)^2 + 1 (Peak at 0.5)
-                // ปรับจูน: ให้ Peak อยู่ที่ประมาณ 0.6 ของเวลา
+                // Y movement: Parabolic arc
+                // ใช้สูตรพาราโบลา: y = -4h(x - 0.5)² + h โดย h คือความสูงสูงสุด
+                // เมื่อ x = 0: y = 0, x = 0.5: y = h (จุดสูงสุด), x = 1: y = 0
                 
-                const peakHeight = targetYBase + 150; // จุดสูงสุด (เหนือห่วง)
-                
-                // คำนวณความสูงแบบวิถีโค้ง
-                // Sin wave 0 to PI คือครึ่งวงกลม
-                const arc = Math.sin(progress * Math.PI); 
-                // ผสมกับ Linear เพื่อให้มันไปข้างหน้าและขึ้นบน
-                const linearRise = targetYBase * progress; 
-                
-                // Override สูตรด้วย Bezier Curve แบบกำหนดเองเพื่อความสมจริง
-                // P0(0,0) -> P1(Control Point สูง) -> P2(Target ลงห่วง)
-                
-                let yFactor;
-                if (progress < 0.6) {
-                    // ช่วงขาขึ้น (Ease Out)
-                    yFactor = 1 - Math.pow(1 - (progress / 0.6), 2);
-                    // Map 0..1 to 0..PeakHeight
+                let currentY;
+                if (progress <= 0.5) {
+                    // ช่วงขาขึ้น: เร่งขึ้นไปจุดสูงสุด
+                    const upProgress = progress / 0.5;
+                    currentY = peakHeight * (1 - Math.pow(1 - upProgress, 2));
                 } else {
-                    // ช่วงขาลง (Gravity accelerating)
-                    // จาก 0.6 ถึง 1.0 คือการตกลงมาจาก Peak
-                    const dropProgress = (progress - 0.6) / 0.4;
-                    yFactor = 1 - (dropProgress * dropProgress * 0.2); // ตกลงมานิดหน่อย
+                    // ช่วงขาลง: ตกลงมาที่ห่วง
+                    const downProgress = (progress - 0.5) / 0.5;
+                    const heightAtPeak = peakHeight;
+                    const heightAtEnd = targetYRise;
+                    currentY = heightAtPeak - (heightAtPeak - heightAtEnd) * Math.pow(downProgress, 2);
                 }
-                
-                // ปรับแต่งความสูงสุดท้าย
-                const currentY = (progress < 0.6) 
-                    ? (peakHeight * yFactor) 
-                    : (peakHeight - ((peakHeight - targetYBase) * ((progress - 0.6)/0.4)));
 
-
-                // --- KEY FIX: DEPTH SWAPPING ---
-                // Rim Z-index = 20
-                // Ball Start Z-index = 30 (อยู่หน้าสุด)
-                // เมื่อบอลลอยถึงจุดสูงสุดและกำลังจะตกลงห่วง (progress > 0.65)
-                // เราต้องสลับบอลไปอยู่ "หลัง" Rim (Z-index < 20) แต่ "หน้า" Backboard (Z-index > 2)
-                
-                if (progress > 0.65) {
-                    ballElem.style.zIndex = '10'; // ต่ำกว่า Rim (20) แต่สูงกว่า Net (3)
+                // --- DEPTH SWAPPING ---
+                // เมื่อบอลผ่านจุดสูงสุดและกำลังตกลง สลับไปอยู่หลังห่วง
+                if (progress > 0.55) {
+                    ballElem.style.zIndex = '10';
                 } else {
                     ballElem.style.zIndex = '30';
                 }
 
-                // Scale: เล็กลงเมื่อไกล
-                const scale = 1 - (0.55 * progress);
+                // Scale: เล็กลงเมื่อไกลออกไป (สร้างมิติลึก)
+                const scale = 1 - (0.5 * progress);
 
                 // Rotation
-                const rotate = (direction === "left" ? -1 : 1) * 720 * progress;
+                const rotate = (direction === "left" ? -1 : 1) * 540 * progress;
 
                 ballElem.style.transform = `translate(calc(-50% + ${currentX}px), -${currentY}px) scale(${scale}) rotate(${rotate}deg)`;
 
