@@ -173,6 +173,7 @@
             border-bottom: none;
         }
 
+        /* เพิ่ม ID ให้กับ Rim เพื่อใช้จับพิกัด */
         .hoop-rim {
             width: 60px;
             height: 6px;
@@ -512,74 +513,77 @@
             ballElem.style.transform = 'translate(-50%, 0) scale(1)';
         }
 
-        // --- Cinematic Animation (Screen Ratio Fixed) ---
+        // --- Cinematic Animation (REAL-TIME TARGETING FIX) ---
 
         function triggerShoot(direction) {
             isAnimating = true;
-            
-            // ใช้ความสูงหน้าจอ (Viewport Height) ในการคำนวณ เพื่อให้แม่นยำทุกหน้าจอ
-            const screenH = window.innerHeight;
-            const screenW = window.innerWidth;
-            
-            // 1. จุดเริ่มต้น (Y Start)
-            // CSS bottom: 10% -> แปลว่าอยู่สูงจากขอบล่าง 10%
-            // หรือก็คือ Y = 90% ของหน้าจอ (นับจากบนลงล่าง)
-            const startY_px = screenH * 0.9;
-            
-            // 2. จุดเป้าหมาย (Y Target - Hoop)
-            // CSS Hoop top: 18%. ตัวห่วง Rim อยู่ต่ำลงมาอีกนิด
-            // ให้เป้าหมายอยู่ที่ประมาณ 25% - 28% จากด้านบน
-            const targetY_px = screenH * 0.28; 
-            
-            // 3. ระยะทางแนวดิ่งที่ต้องเคลื่อนที่ (Distance Y)
-            // ค่าต้องเป็นบวก (เลื่อนขึ้น)
-            const deltaY = startY_px - targetY_px; 
 
-            // 4. ระยะทางแนวนอน (Distance X)
-            // Hoop offset จากกึ่งกลางประมาณ 30-35% ของหน้าจอ
-            const xOffset = screenW * 0.35;
-            const deltaX = (direction === "left") ? -xOffset : xOffset;
+            // 1. หาตำแหน่งจุดศูนย์กลางลูกบาสปัจจุบัน (จุดเริ่มต้น)
+            const ballRect = ballElem.getBoundingClientRect();
+            const ballCenterX = ballRect.left + ballRect.width / 2;
+            const ballCenterY = ballRect.top + ballRect.height / 2;
 
+            // 2. หาตำแหน่งเป้าหมาย (ห่วงสีส้ม) บนหน้าจอจริงๆ
+            const targetId = (direction === "left") ? "#hoop-garhu .hoop-rim" : "#hoop-lahu .hoop-rim";
+            const targetElem = document.querySelector(targetId);
+            const targetRect = targetElem.getBoundingClientRect();
+
+            // จุดศูนย์กลางของห่วง
+            const targetCenterX = targetRect.left + targetRect.width / 2;
+            // จุดเป้าหมาย Y: ให้สูงกว่าขอบล่างของห่วงนิดหน่อย เพื่อให้ดูเหมือนลงไปในห่วง
+            const targetCenterY = targetRect.top + (targetRect.height / 2) - 15;
+
+            // 3. คำนวณระยะทางที่ต้องเคลื่อนที่ (Delta)
+            const deltaX = targetCenterX - ballCenterX;
+            // ระยะทางแนวตั้ง (ต้องเป็นบวก เพราะเราจะย้ายขึ้นข้างบน)
+            const deltaY = ballCenterY - targetCenterY; 
+            
+            // ตั้งค่า Animation Curve
             const duration = 900; 
             const startTime = performance.now();
-            
+
+            // จุดควบคุมความสูงสำหรับ Bezier Curve (ให้สูงกว่าห่วงเยอะๆ จะได้โค้งสวย)
+            const peakHeightToAdd = 350;
+
             function animate(time) {
                 let elapsed = time - startTime;
                 let progress = elapsed / duration;
                 if (progress > 1) progress = 1;
-
-                // X Movement: Linear
-                const currentX = deltaX * progress;
-                
-                // Y Movement: Parabola (High Arc)
-                // เพื่อแก้ปัญหา "ลูกต่ำเกินไป" เราต้องกำหนดจุด Peak ให้สูงกว่าห่วงเยอะๆ
-                // P0 = 0 (Start)
-                // P1 = deltaY + 300 (Control Point สูงปรี๊ดเหนือห่วง)
-                // P2 = deltaY (Target at Hoop)
-                
                 const t = progress;
-                const p0 = 0;
-                const p1 = deltaY + 300; // เพิ่มความสูงตรงนี้เพื่อให้ลูกโด่ง
-                const p2 = deltaY - 20; // ปรับลงนิดหน่อยให้ดูลงตาข่าย
-                
-                // Quadratic Bezier Formula
-                const currentY = (1-t)*(1-t)*p0 + 2*(1-t)*t*p1 + t*t*p2;
 
-                // Z-Index Swapping (เทคนิคเดิม)
-                if (progress > 0.65) {
-                    ballElem.style.zIndex = '10'; // เข้าหลังห่วง
+                // --- คำนวณเส้นทางด้วย Quadratic Bezier Curve ---
+                // สูตร: B(t) = (1-t)^2 * P0 + 2(1-t)t * P1 + t^2 * P2
+
+                // X Axis Movement (เคลื่อนที่จาก 0 ไป deltaX)
+                // P0=0, P1=deltaX/2, P2=deltaX
+                const currentX = (1-t)*(1-t)*0 + 2*(1-t)*t*(deltaX/2) + t*t*deltaX;
+
+                // Y Axis Movement (เคลื่อนที่จาก 0 ขึ้นไป deltaY)
+                // เราต้องการระยะทางความสูงที่เป็นบวก
+                // P0 = 0 (จุดเริ่ม)
+                // P1 = deltaY + peakHeightToAdd (จุดสูงสุดของวิถีโค้ง)
+                // P2 = deltaY (จุดสิ้นสุดที่ห่วง)
+                const distY_p0 = 0;
+                const distY_p1 = deltaY + peakHeightToAdd;
+                const distY_p2 = deltaY;
+                
+                const upwardDistance = (1-t)*(1-t)*distY_p0 + 2*(1-t)*t*distY_p1 + t*t*distY_p2;
+
+                // Z-Index Swapping (เทคนิคเดิม: สลับเลเยอร์เพื่อให้ดูลูกลงห่วง)
+                // ปรับจังหวะให้สลับตอนลูกเริ่มตกลงมา (t > 0.7)
+                if (progress > 0.7) {
+                    // ให้บอลอยู่หลังห่วง (20) แต่อยู่หน้าตาข่าย (3)
+                    ballElem.style.zIndex = '15'; 
                 } else {
                     ballElem.style.zIndex = '30';
                 }
 
-                // Scale
+                // Scale & Rotation
                 const scale = 1 - (0.55 * progress);
-
-                // Rotation
                 const rotate = (direction === "left" ? -1 : 1) * 720 * progress;
 
-                // Apply
-                ballElem.style.transform = `translate(calc(-50% + ${currentX}px), -${currentY}px) scale(${scale}) rotate(${rotate}deg)`;
+                // Apply Transform (ใช้ค่า negative สำหรับ Y เพื่อให้เลื่อนขึ้น)
+                ballElem.style.transform = `translate(calc(-50% + ${currentX}px), -${upwardDistance}px) scale(${scale}) rotate(${rotate}deg)`;
 
                 if (progress < 1) {
                     requestAnimationFrame(animate);
