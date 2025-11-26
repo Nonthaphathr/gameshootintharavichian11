@@ -124,7 +124,7 @@
         /* --- Hoop Design --- */
         .hoop-container {
             position: absolute;
-            top: 18%; 
+            top: 18%; /* ตำแหน่งแป้นสัมพันธ์กับความสูงจอ */
             width: 100%;
             display: flex;
             justify-content: space-around;
@@ -173,7 +173,6 @@
             border-bottom: none;
         }
 
-        /* ห่วงเหล็ก (Rim) */
         .hoop-rim {
             width: 60px;
             height: 6px;
@@ -184,7 +183,6 @@
             z-index: 20; 
         }
 
-        /* ตาข่าย - เป้าหมายการลง */
         .hoop-net {
             position: absolute;
             top: 75px;
@@ -223,7 +221,7 @@
             background-position: center;
             border-radius: 50%;
             position: absolute;
-            bottom: 50px;
+            bottom: 10%; /* เริ่มต้นที่ 10% ของจอ เพื่อความสมดุล */
             left: 50%;
             transform: translate(-50%, 0); 
             display: flex;
@@ -453,8 +451,9 @@
             ballText.innerText = randomWord.text;
 
             ballElem.style.transition = 'none';
+            // Reset ตำแหน่ง
             ballElem.style.transform = 'translate(-50%, 0) scale(1) rotate(0deg)';
-            ballElem.style.bottom = '50px';
+            ballElem.style.bottom = '10%'; // Reset กลับมาที่จุดเริ่ม
             ballElem.style.zIndex = '30'; 
             
             isDragging = false;
@@ -513,35 +512,33 @@
             ballElem.style.transform = 'translate(-50%, 0) scale(1)';
         }
 
-        // --- Cinematic Animation with DYNAMIC TARGETING (แก้ไขใหม่) ---
+        // --- Cinematic Animation (Screen Ratio Fixed) ---
 
         function triggerShoot(direction) {
             isAnimating = true;
             
-            // 1. หาตำแหน่งลูกบาสปัจจุบัน
-            const ballRect = ballElem.getBoundingClientRect();
-            const ballCenterX = ballRect.left + (ballRect.width / 2);
-            const ballBottomY = ballRect.bottom;
-
-            // 2. หาตำแหน่ง "ตาข่าย" เป้าหมาย (Net) จริงๆ บนหน้าจอ
-            const targetId = (direction === "left") ? "net-left" : "net-right";
-            const targetElem = document.getElementById(targetId);
-            const targetRect = targetElem.getBoundingClientRect();
+            // ใช้ความสูงหน้าจอ (Viewport Height) ในการคำนวณ เพื่อให้แม่นยำทุกหน้าจอ
+            const screenH = window.innerHeight;
+            const screenW = window.innerWidth;
             
-            // หาจุดกึ่งกลางของตาข่าย
-            const targetCenterX = targetRect.left + (targetRect.width / 2);
-            const targetCenterY = targetRect.top + (targetRect.height / 2);
-
-            // 3. คำนวณระยะทาง (Delta) ที่ต้องเคลื่อนที่
-            // X: ระยะห่างแนวนอน (Pixel Difference)
-            const deltaX = targetCenterX - ballCenterX;
+            // 1. จุดเริ่มต้น (Y Start)
+            // CSS bottom: 10% -> แปลว่าอยู่สูงจากขอบล่าง 10%
+            // หรือก็คือ Y = 90% ของหน้าจอ (นับจากบนลงล่าง)
+            const startY_px = screenH * 0.9;
             
-            // Y: ระยะห่างแนวตั้ง (Pixel Difference) ต้องเป็นค่าบวกสำหรับการคำนวณความสูง
-            // (ลูกบอลอยู่ต่ำกว่าห่วง = ballRect.top > targetRect.top)
-            // เราต้องการระยะจากจุดเริ่ม ขึ้นไปยังห่วง
-            // ลูกบาสเริ่มที่ bottom: 50px แต่ transform จัดการ
-            // ใช้ความต่างของ Rect Top ง่ายสุด
-            const deltaY = ballRect.top - targetRect.top; 
+            // 2. จุดเป้าหมาย (Y Target - Hoop)
+            // CSS Hoop top: 18%. ตัวห่วง Rim อยู่ต่ำลงมาอีกนิด
+            // ให้เป้าหมายอยู่ที่ประมาณ 25% - 28% จากด้านบน
+            const targetY_px = screenH * 0.28; 
+            
+            // 3. ระยะทางแนวดิ่งที่ต้องเคลื่อนที่ (Distance Y)
+            // ค่าต้องเป็นบวก (เลื่อนขึ้น)
+            const deltaY = startY_px - targetY_px; 
+
+            // 4. ระยะทางแนวนอน (Distance X)
+            // Hoop offset จากกึ่งกลางประมาณ 30-35% ของหน้าจอ
+            const xOffset = screenW * 0.35;
+            const deltaX = (direction === "left") ? -xOffset : xOffset;
 
             const duration = 900; 
             const startTime = performance.now();
@@ -551,48 +548,25 @@
                 let progress = elapsed / duration;
                 if (progress > 1) progress = 1;
 
-                // X Movement: เลื่อนตามระยะทางจริงที่คำนวณได้
+                // X Movement: Linear
                 const currentX = deltaX * progress;
                 
-                // Y Movement: Parabola
-                // ให้จุดสูงสุด (Peak) อยู่สูงกว่าห่วงนิดหน่อย (+100px) แล้วตกลงมา
-                const peakHeight = deltaY + 100; 
-                
-                let yFactor;
-                if (progress < 0.6) {
-                    // ขาขึ้น (Ease Out)
-                    yFactor = 1 - Math.pow(1 - (progress / 0.6), 2);
-                } else {
-                    // ขาลง (Gravity) ลงมาที่ DeltaY (ระดับห่วง)
-                    const dropProgress = (progress - 0.6) / 0.4;
-                    // คำนวณให้ลงมาจบที่ deltaY พอดี ไม่ใช่ 0
-                    // Peak -> Target
-                    const range = peakHeight - deltaY; 
-                    // เราต้องการค่า Y ที่จะเอาไปลบ (Translate Y ยิ่งลบยิ่งขึ้น)
-                    // ที่ progress 1.0 ค่าต้องเท่ากับ deltaY (ระดับห่วง)
-                    
-                    // สูตร Interpolate จาก Peak ลงมา Target
-                    const drop = (peakHeight - deltaY) * (dropProgress * dropProgress); 
-                    // currentY ในช่วงนี้คือ Peak - drop
-                    // แต่ตัวแปรที่เราใช้คือ "ความสูงจากพื้น" ใน Logic เก่า
-                    // เปลี่ยนเป็น "ระยะทาง Pixel ที่เลื่อนขึ้นไป"
-                }
-
-                // คำนวณ Y ใหม่แบบ Simple Parabola Interpolation
+                // Y Movement: Parabola (High Arc)
+                // เพื่อแก้ปัญหา "ลูกต่ำเกินไป" เราต้องกำหนดจุด Peak ให้สูงกว่าห่วงเยอะๆ
                 // P0 = 0 (Start)
-                // P1 = deltaY + 150 (Control Point สูงเหนือห่วง)
-                // P2 = deltaY (End at Hoop)
+                // P1 = deltaY + 300 (Control Point สูงปรี๊ดเหนือห่วง)
+                // P2 = deltaY (Target at Hoop)
                 
-                // Quadratic Bezier: (1-t)^2 * P0 + 2(1-t)t * P1 + t^2 * P2
                 const t = progress;
                 const p0 = 0;
-                const p1 = deltaY + 250; // สูงขึ้นไปอีกเพื่อให้โค้งสวย
-                const p2 = deltaY - 20; // ลงต่ำกว่าห่วงนิดนึงให้ดูเหมือนลงตาข่าย (Visual Correction)
+                const p1 = deltaY + 300; // เพิ่มความสูงตรงนี้เพื่อให้ลูกโด่ง
+                const p2 = deltaY - 20; // ปรับลงนิดหน่อยให้ดูลงตาข่าย
                 
+                // Quadratic Bezier Formula
                 const currentY = (1-t)*(1-t)*p0 + 2*(1-t)*t*p1 + t*t*p2;
 
                 // Z-Index Swapping (เทคนิคเดิม)
-                if (progress > 0.6) {
+                if (progress > 0.65) {
                     ballElem.style.zIndex = '10'; // เข้าหลังห่วง
                 } else {
                     ballElem.style.zIndex = '30';
