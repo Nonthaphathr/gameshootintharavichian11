@@ -4,22 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>เกมชู้ตบาส คำครุ-ลหุ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* CSS Styles */
+        /* --- CSS Styles --- */
         body {
             font-family: 'Sarabun', sans-serif;
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #333;
+            background-color: #222;
             color: white;
-            touch-action: none; /* ป้องกันการเลื่อนหน้าจอเวลาเล่น */
+            touch-action: none;
+            height: 100vh;
+            width: 100vw;
         }
 
         .screen {
             display: none;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -32,176 +35,217 @@
             display: flex;
         }
 
-        /* หน้าลงทะเบียน */
+        /* เครดิตนักพัฒนา */
+        .dev-credit {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            text-shadow: 1px 1px 2px black;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* --- หน้าลงทะเบียน --- */
         #registration-screen {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         }
 
         .form-box {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 20px;
             color: #333;
-            width: 80%;
-            max-width: 400px;
+            width: 85%;
+            max-width: 380px;
             text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
+        .form-box h2 { color: #1e3c72; margin-top: 0; }
+
         input, select {
-            width: 90%;
-            padding: 10px;
-            margin: 5px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
             font-size: 16px;
+            box-sizing: border-box; /* จัดระเบียบ padding */
+            font-family: 'Sarabun', sans-serif;
         }
 
         button {
-            background-color: #ff5722;
+            background: linear-gradient(to right, #ff512f, #dd2476);
             color: white;
             border: none;
-            padding: 12px 24px;
+            padding: 12px 30px;
             margin-top: 15px;
-            border-radius: 25px;
+            border-radius: 30px;
             font-size: 18px;
+            font-weight: bold;
             cursor: pointer;
+            box-shadow: 0 5px 15px rgba(221, 36, 118, 0.4);
             transition: transform 0.2s;
         }
 
-        button:active {
-            transform: scale(0.95);
-        }
+        button:active { transform: scale(0.95); }
 
         .guest-btn {
-            background-color: #607d8b;
+            background: #607d8b;
+            box-shadow: none;
             font-size: 14px;
-            margin-top: 10px;
+            padding: 8px 20px;
         }
 
-        /* หน้าเกม */
+        /* --- หน้าเกม --- */
         #game-screen {
-            background: url('https://img.freepik.com/free-vector/basketball-court-floor-background_1017-14238.jpg') no-repeat center center;
-            background-size: cover;
+            /* พื้นหลังตามที่ระบุ */
+            background: url('https://nonthaphathr.github.io/uploadimg/bgbas.png') no-repeat center bottom;
+            background-size: cover; /* หรือ contain ตามความเหมาะสมของภาพ */
             position: relative;
         }
 
         .hud {
             position: absolute;
-            top: 10px;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 20px;
-            box-sizing: border-box;
+            top: 15px;
+            left: 15px;
             font-size: 20px;
             font-weight: bold;
-            text-shadow: 2px 2px 4px #000;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
             z-index: 10;
+            line-height: 1.5;
+        }
+
+        .end-game-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #d32f2f;
+            font-size: 14px;
+            padding: 8px 15px;
+            margin: 0;
+            z-index: 20;
+            border: 2px solid white;
         }
 
         .hoop-container {
             position: absolute;
-            top: 80px;
+            top: 15%; /* ปรับตำแหน่งแป้น */
             width: 100%;
             display: flex;
             justify-content: space-around;
         }
 
         .hoop {
-            width: 120px;
-            height: 100px;
-            border: 5px solid white;
+            width: 110px;
+            height: 90px;
+            border: 6px solid #fff;
             border-radius: 10px;
             position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            padding-bottom: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 15px rgba(255,255,255,0.3);
         }
 
+        /* ตาข่ายแป้น */
         .hoop::after {
             content: '';
-            width: 80px;
-            height: 20px;
-            border: 4px solid orange;
-            border-radius: 50%;
             position: absolute;
-            bottom: 20px;
-            background: rgba(0,0,0,0.3);
+            bottom: -30px;
+            left: 5px;
+            width: 90px;
+            height: 30px;
+            background: repeating-linear-gradient(45deg, white, white 2px, transparent 2px, transparent 10px),
+                        repeating-linear-gradient(-45deg, white, white 2px, transparent 2px, transparent 10px);
+            opacity: 0.7;
+            clip-path: polygon(0 0, 100% 0, 80% 100%, 20% 100%);
         }
 
         .hoop-label {
             position: absolute;
-            top: -40px;
-            font-size: 24px;
+            top: -45px;
+            width: 100%;
+            text-align: center;
+            font-size: 26px;
             font-weight: bold;
-            background: rgba(0,0,0,0.7);
-            padding: 5px 10px;
-            border-radius: 5px;
+            text-shadow: 2px 2px 0 #000;
         }
 
+        #hoop-garhu .hoop-label { color: #ff4081; }
         #hoop-garhu { border-color: #ff4081; }
+        
+        #hoop-lahu .hoop-label { color: #00e676; }
         #hoop-lahu { border-color: #00e676; }
 
+        /* ลูกบาส */
         #ball {
-            width: 80px;
-            height: 80px;
-            background: radial-gradient(circle at 30% 30%, #ffab40, #e65100);
+            width: 90px;
+            height: 90px;
+            background: url('https://cdn-icons-png.flaticon.com/512/33/33736.png'); /* ใช้รูปบาสเก็ตบอลจริง */
+            background-size: cover;
             border-radius: 50%;
             position: absolute;
-            bottom: 50px;
+            bottom: 80px;
             left: 50%;
-            transform: translateX(-50%);
+            /* ใช้ transform ในการจัดตำแหน่งเพื่อให้ animation ลื่นไหล */
+            transform: translate(-50%, 0); 
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
             color: white;
-            text-shadow: 1px 1px 2px black;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            text-shadow: 1px 1px 4px black, -1px -1px 4px black;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
             user-select: none;
-            cursor: grab;
             z-index: 5;
+            touch-action: none;
+        }
+
+        /* ข้อความบนลูกบาส */
+        #ball span {
+            z-index: 6;
+            pointer-events: none; /* เพื่อไม่ให้ขวางการทัช */
         }
 
         #feedback {
             position: absolute;
-            top: 40%;
+            top: 45%;
             width: 100%;
             text-align: center;
-            font-size: 40px;
-            font-weight: bold;
+            font-size: 50px;
+            font-weight: 800;
             opacity: 0;
-            transition: opacity 0.5s;
             pointer-events: none;
-            z-index: 20;
-            text-shadow: 0 0 10px black;
+            z-index: 50;
+            text-shadow: 0 0 20px black;
+            transition: opacity 0.3s, transform 0.3s;
         }
 
-        /* หน้าสรุป */
+        /* --- หน้าสรุป --- */
         #summary-screen {
-            background-color: #222;
+            background-color: #1a1a1a;
         }
-
+        
         .summary-box {
-            text-align: center;
-            background: #fff;
+            background: white;
             color: #333;
-            padding: 30px;
-            border-radius: 15px;
+            padding: 40px 20px;
+            border-radius: 20px;
             width: 80%;
             max-width: 400px;
+            text-align: center;
         }
 
-        h1, h2 { margin: 0 0 15px 0; }
-        .score-big { font-size: 60px; color: #ff5722; font-weight: bold; }
-        .detail-text { font-size: 18px; margin-bottom: 5px; text-align: left; }
-
+        .score-big { font-size: 70px; color: #ff5722; font-weight: bold; line-height: 1; margin: 20px 0; }
+        
     </style>
 </head>
 <body>
+
+    <div class="dev-credit">พัฒนาโดย ครูนนทพัทธ์ หิรัญเรือง</div>
 
     <div id="registration-screen" class="screen active">
         <div class="form-box">
@@ -214,7 +258,17 @@
             </select>
             <input type="text" id="firstname" placeholder="ชื่อจริง">
             <input type="text" id="lastname" placeholder="นามสกุล">
-            <input type="text" id="student-class" placeholder="ชั้น (เช่น ม.6/1)">
+            
+            <select id="student-class">
+                <option value="" disabled selected>-- เลือกระดับชั้น --</option>
+                <option value="ม.1">มัธยมศึกษาปีที่ 1</option>
+                <option value="ม.2">มัธยมศึกษาปีที่ 2</option>
+                <option value="ม.3">มัธยมศึกษาปีที่ 3</option>
+                <option value="ม.4">มัธยมศึกษาปีที่ 4</option>
+                <option value="ม.5">มัธยมศึกษาปีที่ 5</option>
+                <option value="ม.6">มัธยมศึกษาปีที่ 6</option>
+            </select>
+
             <input type="number" id="student-number" placeholder="เลขที่">
             
             <button onclick="startGame(true)">เริ่มเกม</button>
@@ -224,31 +278,34 @@
 
     <div id="game-screen" class="screen">
         <div class="hud">
-            <div>เวลา: <span id="timer">60</span></div>
-            <div>คะแนน: <span id="score">0</span></div>
+            <div>⏰ เวลา: <span id="timer">60</span></div>
+            <div>🏆 คะแนน: <span id="score">0</span></div>
         </div>
+
+        <button class="end-game-btn" onclick="manualEndGame()">จบเกม</button>
 
         <div class="hoop-container">
             <div class="hoop" id="hoop-garhu">
-                <div class="hoop-label" style="color:#ff4081">คำครุ</div>
+                <div class="hoop-label">คำครุ</div>
             </div>
             <div class="hoop" id="hoop-lahu">
-                <div class="hoop-label" style="color:#00e676">คำลหุ</div>
+                <div class="hoop-label">คำลหุ</div>
             </div>
         </div>
 
         <div id="feedback"></div>
         
-        <div id="ball">คำ</div>
+        <div id="ball"><span>คำ</span></div>
     </div>
 
     <div id="summary-screen" class="screen">
         <div class="summary-box">
-            <h2>จบเกม!</h2>
+            <h2 style="color:#ff512f">จบเกม!</h2>
             <p>คะแนนรวมของคุณคือ</p>
             <div class="score-big" id="final-score">0</div>
-            <hr>
-            <div id="player-details"></div>
+            <div style="text-align: left; background: #f5f5f5; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                <div id="player-details"></div>
+            </div>
             <button onclick="location.reload()">เล่นใหม่อีกครั้ง</button>
         </div>
     </div>
@@ -256,7 +313,7 @@
     <script>
         // --- 1. ข้อมูลและตัวแปร ---
         const words = [
-            // คำครุ (20 คำ)
+            // ครุ
             { text: "ฟ้า", type: "garhu" }, { text: "กู", type: "garhu" }, { text: "มี", type: "garhu" },
             { text: "บ้าน", type: "garhu" }, { text: "รถ", type: "garhu" }, { text: "กิน", type: "garhu" },
             { text: "รัก", type: "garhu" }, { text: "เมือง", type: "garhu" }, { text: "เขา", type: "garhu" },
@@ -264,7 +321,7 @@
             { text: "โลก", type: "garhu" }, { text: "เป็น", type: "garhu" }, { text: "ดอก", type: "garhu" },
             { text: "อยาก", type: "garhu" }, { text: "ขอบ", type: "garhu" }, { text: "หญ้า", type: "garhu" },
             { text: "อยู่", type: "garhu" }, { text: "ความ", type: "garhu" },
-            // คำลหุ (20 คำ)
+            // ลหุ
             { text: "จะ", type: "lahu" }, { text: "ก็", type: "lahu" }, { text: "นะ", type: "lahu" },
             { text: "มิ", type: "lahu" }, { text: "สิ", type: "lahu" }, { text: "ธุ", type: "lahu" },
             { text: "บิ", type: "lahu" }, { text: "ดิ", type: "lahu" }, { text: "ติ", type: "lahu" },
@@ -283,10 +340,9 @@
             timerInterval: null
         };
 
-        // --- 2. ฟังก์ชันจัดการหน้าจอและการเริ่มเกม ---
+        // --- 2. ฟังก์ชันจัดการเกม ---
         
         function startGame(isRegistered) {
-            // เก็บข้อมูลผู้เล่น
             if (isRegistered) {
                 const prefix = document.getElementById('prefix').value;
                 const fname = document.getElementById('firstname').value;
@@ -294,27 +350,23 @@
                 const cls = document.getElementById('student-class').value;
                 const num = document.getElementById('student-number').value;
 
-                if (!fname || !lname) {
-                    alert("กรุณากรอกชื่อและนามสกุล");
+                if (!fname || !lname || !cls) {
+                    alert("กรุณากรอกข้อมูลให้ครบถ้วน (ชื่อ, นามสกุล, ระดับชั้น)");
                     return;
                 }
-
                 gameState.currentPlayer = { prefix, fname, lname, cls, num };
             } else {
                 gameState.currentPlayer = { prefix: '', fname: 'ผู้เยี่ยมชม', lname: '', cls: '-', num: '-' };
             }
 
-            // เปลี่ยนหน้าจอ
             document.getElementById('registration-screen').classList.remove('active');
             document.getElementById('game-screen').classList.add('active');
 
-            // รีเซ็ตค่า
             gameState.score = 0;
             gameState.timeLeft = 60;
             gameState.isPlaying = true;
             updateHUD();
 
-            // เริ่มจับเวลา
             gameState.timerInterval = setInterval(() => {
                 gameState.timeLeft--;
                 updateHUD();
@@ -323,7 +375,7 @@
                 }
             }, 1000);
 
-            spawnBall();
+            resetBall();
         }
 
         function updateHUD() {
@@ -331,194 +383,222 @@
             document.getElementById('timer').innerText = gameState.timeLeft;
         }
 
+        function manualEndGame() {
+            if(confirm("ต้องการจบเกมทันทีหรือไม่?")) {
+                endGame();
+            }
+        }
+
         function endGame() {
             gameState.isPlaying = false;
             clearInterval(gameState.timerInterval);
             
-            // เปลี่ยนหน้าจอ
             document.getElementById('game-screen').classList.remove('active');
             document.getElementById('summary-screen').classList.add('active');
-
-            // สรุปผล
             document.getElementById('final-score').innerText = gameState.score;
+            
             const p = gameState.currentPlayer;
             document.getElementById('player-details').innerHTML = `
-                <p class="detail-text"><b>ชื่อ:</b> ${p.prefix}${p.fname} ${p.lname}</p>
-                <p class="detail-text"><b>ชั้น:</b> ${p.cls} <b>เลขที่:</b> ${p.num}</p>
+                <p><b>ชื่อ:</b> ${p.prefix}${p.fname} ${p.lname}</p>
+                <p><b>ระดับชั้น:</b> ${p.cls} &nbsp;&nbsp; <b>เลขที่:</b> ${p.num}</p>
             `;
         }
 
-        // --- 3. ระบบเกมฟิสิกส์และการสัมผัส ---
+        // --- 3. Physics & Animation System (Real-time) ---
 
         const ballElem = document.getElementById('ball');
-        let startX, startY, endX, endY;
-        let isDragging = false;
-        let ballPos = { x: 50, y: 10 }; // % units (x: left, y: bottom)
-        let ballVel = { x: 0, y: 0 };
-        let animationFrame;
+        const ballText = ballElem.querySelector('span');
 
-        // สุ่มคำศัพท์
-        function spawnBall() {
+        let physics = {
+            x: 0, // 0 = center
+            y: 0, // 0 = start position
+            vx: 0,
+            vy: 0,
+            rotation: 0,
+            scale: 1,
+            isDragging: false,
+            startX: 0,
+            startY: 0
+        };
+
+        const START_Y_PX = 80; // จุดเริ่มจากขอบล่าง (px)
+
+        function resetBall() {
             if (!gameState.isPlaying) return;
 
-            // รีเซ็ตตำแหน่งบอล
-            ballElem.style.transition = 'none';
-            ballElem.style.bottom = '50px';
-            ballElem.style.left = '50%';
-            ballElem.style.transform = 'translateX(-50%) scale(1)';
-            ballElem.style.opacity = '1';
-            
             // สุ่มคำ
             const randomWord = words[Math.floor(Math.random() * words.length)];
             gameState.currentBall = randomWord;
-            ballElem.innerText = randomWord.text;
+            ballText.innerText = randomWord.text;
+
+            // รีเซ็ตค่าฟิสิกส์
+            physics.x = 0;
+            physics.y = 0;
+            physics.vx = 0;
+            physics.vy = 0;
+            physics.rotation = 0;
+            physics.scale = 1;
+            physics.isDragging = false;
+
+            // นำบอลกลับมาจุดเดิมทันที
+            renderBall();
             
-            // รีเซ็ตตัวแปรฟิสิกส์
-            isDragging = false;
-            ballPos = { x: 50, y: 10 }; // จำลองตำแหน่งเริ่ม
+            // เอฟเฟกต์ Pop-up
+            ballElem.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            ballElem.style.transform = `translate(-50%, 0) scale(1) rotate(0deg)`;
+            
+            // ลบ transition ออกเพื่อให้ลากได้ลื่นๆ
+            setTimeout(() => {
+                ballElem.style.transition = 'none';
+            }, 300);
         }
 
-        // จับเหตุการณ์ Touch/Mouse
-        ballElem.addEventListener('mousedown', startDrag);
-        ballElem.addEventListener('touchstart', startDrag);
+        // แปลงค่าฟิสิกส์เป็น CSS Transform
+        function renderBall() {
+            // x: แปลงจาก pixel offset เป็น translate
+            // y: แปลงเป็นลบเพราะ CSS translate Y ยิ่งลบยิ่งขึ้นบน
+            const transformString = `translate(calc(-50% + ${physics.x}px), -${physics.y}px) scale(${physics.scale}) rotate(${physics.rotation}deg)`;
+            ballElem.style.transform = transformString;
+        }
 
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('touchmove', drag);
+        // Input Handlers
+        ballElem.addEventListener('mousedown', onStart);
+        ballElem.addEventListener('touchstart', onStart, {passive: false});
 
-        document.addEventListener('mouseup', endDrag);
-        document.addEventListener('touchend', endDrag);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('touchmove', onMove, {passive: false});
 
-        function startDrag(e) {
-            if (!gameState.isPlaying) return;
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchend', onEnd);
+
+        function onStart(e) {
+            if (!gameState.isPlaying || physics.vy !== 0) return; // ห้ามจับถ้าบอลกำลังลอย
             e.preventDefault();
-            isDragging = true;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            startX = clientX;
-            startY = clientY;
+            physics.isDragging = true;
+            const pt = e.touches ? e.touches[0] : e;
+            physics.startX = pt.clientX;
+            physics.startY = pt.clientY;
         }
 
-        function drag(e) {
-            if (!isDragging) return;
-            // อาจจะเพิ่ม Visual cue ว่ากำลังลาก แต่ในที่นี้เน้นเรียบง่าย
-        }
-
-        function endDrag(e) {
-            if (!isDragging) return;
-            isDragging = false;
+        function onMove(e) {
+            if (!physics.isDragging) return;
+            e.preventDefault(); // กันจอลาก
+            const pt = e.touches ? e.touches[0] : e;
             
-            const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-            const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-            endX = clientX;
-            endY = clientY;
+            // ให้บอลขยับตามนิ้วเล็กน้อยเพื่อให้รู้สึกสมจริง (Deadzone dragging)
+            const dx = pt.clientX - physics.startX;
+            const dy = pt.clientY - physics.startY;
+            
+            // จำกัดการลากไม่ให้หลุดไกลเกิน
+            physics.x = dx * 0.5; 
+            physics.y = -dy * 0.5; 
+            if(physics.y < 0) physics.y = 0;
+            
+            renderBall();
+        }
 
-            // คำนวณแรง
-            const deltaX = endX - startX;
-            const deltaY = endY - startY; // ค่าจะเป็นลบถ้าลากขึ้น
+        function onEnd(e) {
+            if (!physics.isDragging) return;
+            physics.isDragging = false;
 
-            // ถ้าลากขึ้น (ชู้ท)
-            if (deltaY < -20) {
-                shootBall(deltaX, deltaY);
+            const pt = e.changedTouches ? e.changedTouches[0] : e;
+            const dx = pt.clientX - physics.startX;
+            const dy = pt.clientY - physics.startY;
+
+            // ตรวจสอบว่าเป็นการชู้ต (ลากขึ้น)
+            if (dy < -30) {
+                // คำนวณแรง
+                physics.vx = dx * 0.15; // แรงแนวนอน
+                physics.vy = Math.abs(dy) * 0.18; // แรงแนวตั้ง (ยิ่งลากไกลยิ่งแรง)
+                
+                // จำกัดความเร็วสูงสุด/ต่ำสุด
+                if(physics.vy > 25) physics.vy = 25;
+                if(physics.vy < 10) physics.vy = 12;
+
+                requestAnimationFrame(gameLoop);
+            } else {
+                // ถ้าแค่แตะๆ หรือลากลง ให้เด้งกลับ
+                resetBall();
             }
         }
 
-        function shootBall(dx, dy) {
-            // แปลงแรงลากเป็นความเร็ว
-            const speedMultiplier = 0.15;
-            ballVel.x = dx * speedMultiplier * 0.5; // ลดความไวแนวนอนหน่อย
-            ballVel.y = Math.abs(dy) * speedMultiplier; 
+        function gameLoop() {
+            if (!gameState.isPlaying) return;
 
-            animateShoot();
-        }
-
-        function animateShoot() {
-            // อัพเดทตำแหน่ง
-            let bottom = parseFloat(ballElem.style.bottom) || 50;
-            let left = parseFloat(ballElem.style.left) || 50; // เป็น % ยาก แปลงเป็น px ชั่วคราวดีกว่า
-
-            // ใช้ระบบพิกัดง่ายๆ: bottom เพิ่มขึ้น = ขึ้น
-            // ballVel.y จะลดลงเรื่อยๆ (แรงโน้มถ่วง)
+            // อัปเดตฟิสิกส์ (Euler Integration)
+            physics.x += physics.vx;
+            physics.y += physics.vy;
+            physics.vy -= 0.5; // Gravity
             
-            let posX = 0; // relative center
-            let posY = 50; // start bottom pixel
+            // หมุนบอลตามทิศทาง X
+            physics.rotation += physics.vx * 2;
+            
+            // ลดขนาดเมื่อไกลออกไป (Perspective)
+            // ยิ่งสูง ยิ่งเล็ก
+            const maxHeight = 600;
+            let scaleFactor = 1 - (physics.y / maxHeight) * 0.5;
+            if(scaleFactor < 0.4) scaleFactor = 0.4;
+            physics.scale = scaleFactor;
 
-            const gravity = 0.5;
-            let scale = 1;
+            renderBall();
 
-            function frame() {
-                if (!gameState.isPlaying) return;
-
-                posY += ballVel.y;
-                posX += ballVel.x;
-                ballVel.y -= gravity; // แรงโน้มถ่วง
-                scale -= 0.01; // บอลเล็กลงเมื่อไกลออกไป
-
-                if (scale < 0.5) scale = 0.5;
-
-                ballElem.style.bottom = posY + 'px';
-                ballElem.style.transform = `translateX(calc(-50% + ${posX}px)) scale(${scale})`;
-
-                // เช็คการชน (Collision Detection) เมื่อบอลลอยถึงจุดสูงสุด
-                if (ballVel.y < 0 && ballVel.y > -2 && posY > 300) {
-                   checkScore(posX);
-                   return; 
-                }
-
-                // บอลตกพื้น
-                if (posY < -100) {
-                    showFeedback("พลาด!", "red");
-                    spawnBall();
+            // ตรวจสอบการชน (Collision Logic)
+            // เช็คเมื่อบอลกำลังตก (vy < 0) และอยู่ในระดับความสูงของห่วง (ประมาณ 300-500px)
+            if (physics.vy < 0 && physics.y > 350 && physics.y < 450) {
+                // ตรวจสอบแกน X
+                // หน้าจอ width / 2 = center. 
+                // ห่วงซ้าย (ครุ) อยู่ทางซ้าย (-), ห่วงขวา (ลหุ) อยู่ทางขวา (+)
+                // ปรับค่าความแม่นยำ (Hitbox)
+                
+                if (physics.x < -40) { // ลงซ้าย
+                    handleScore("garhu");
+                    return;
+                } else if (physics.x > 40) { // ลงขวา
+                    handleScore("lahu");
                     return;
                 }
-
-                requestAnimationFrame(frame);
             }
-            frame();
+
+            // บอลตกพื้น
+            if (physics.y < -100) {
+                showFeedback("พลาด!", "#ff9800");
+                resetBall();
+                return;
+            }
+
+            requestAnimationFrame(gameLoop);
         }
 
-        function checkScore(posX) {
-            // ตรวจสอบตำแหน่ง X
-            // หน้าจอแบ่งครึ่ง: ซ้าย (< -50px approx) = ครุ, ขวา (> 50px approx) = ลหุ
-            // ค่า posX คือค่า offset จากตรงกลาง
+        function handleScore(hitSide) {
+            const correctType = gameState.currentBall.type;
             
-            let hitType = null;
-            if (posX < -20) hitType = "garhu"; // ไปทางซ้าย
-            else if (posX > 20) hitType = "lahu"; // ไปทางขวา
-
-            if (hitType) {
-                // ตรวจคำตอบ
-                if (hitType === gameState.currentBall.type) {
-                    // ถูกต้อง
-                    gameState.score += 10; // คะแนนลงห่วง
-                    gameState.score += Math.ceil(gameState.timeLeft / 10); // โบนัสเวลา
-                    gameState.timeLeft += 2; // เพิ่มเวลาให้เล็กน้อย
-                    showFeedback("ถูกต้อง! +10", "#00e676");
-                } else {
-                    // ผิดห่วง
-                    gameState.score = Math.max(0, gameState.score - 5);
-                    showFeedback("ผิดห่วง!", "#ff4081");
-                }
+            if (hitSide === correctType) {
+                // ถูกต้อง
+                gameState.score += 10;
+                gameState.score += Math.ceil(gameState.timeLeft / 10);
+                gameState.timeLeft += 2;
+                showFeedback("✔ ลงห่วง! +10", "#00e676");
             } else {
-                 showFeedback("วืด!", "orange");
+                // ผิดห่วง
+                if(gameState.score > 0) gameState.score -= 5;
+                showFeedback("❌ ผิดห่วง", "#d32f2f");
             }
-            
             updateHUD();
             
-            // รอแป๊บแล้วเริ่มใหม่
-            setTimeout(spawnBall, 500);
+            // หน่วงเวลาแป๊บแล้วเริ่มใหม่
+            setTimeout(resetBall, 600);
         }
 
-        function showFeedback(text, color) {
+        function showFeedback(msg, color) {
             const fb = document.getElementById('feedback');
-            fb.innerText = text;
+            fb.innerText = msg;
             fb.style.color = color;
             fb.style.opacity = 1;
-            fb.style.top = '40%';
+            fb.style.transform = "scale(1.2)";
             
-            // Animation เล็กน้อย
             setTimeout(() => {
-                fb.style.top = '30%';
                 fb.style.opacity = 0;
+                fb.style.transform = "scale(1)";
             }, 800);
         }
 
